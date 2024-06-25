@@ -98,6 +98,10 @@ COPY --from=builder /home/builder/yum-packaging-precompiled-kmod/RPMS/*/*.rpm /r
 COPY --from=builder --chmod=444 /home/builder/yum-packaging-precompiled-kmod/tmp/firmware/*.bin /lib/firmware/nvidia/${DRIVER_VERSION}/
 # Temporary workaround until the permanent fix for libdnf is merged
 COPY nvidia-toolkit-firstboot.service /usr/lib/systemd/system/nvidia-toolkit-firstboot.service
+# Enable common services
+COPY build/usr /usr
+
+ARG IMAGE_VERSION
 
 # TODO: rework this monstrosity into a build.sh (or even not shell script)
 # The need for the `cp /etc/dnf/dnf.conf` is a workaround for https://github.com/containers/bootc/issues/637
@@ -146,6 +150,14 @@ RUN mv /etc/selinux /etc/selinux.tmp \
     && ln -s ../cloud-init.target /usr/lib/systemd/system/default.target.wants \
     && mv /etc/selinux.tmp /etc/selinux \
     && ln -s /usr/lib/systemd/system/nvidia-toolkit-firstboot.service /usr/lib/systemd/system/basic.target.wants/nvidia-toolkit-firstboot.service \
+    # enable upgrade informer timer
+    && ln -s /usr/lib/systemd/system/upgrade-informer.timer /usr/lib/systemd/system/timers.target.wants/upgrade-informer.timer \
+    # enable upgrade informer service, added as we need it to start on boot
+    && ln -s /usr/lib/systemd/system/upgrade-informer.service /usr/lib/systemd/system/basic.target.wants/upgrade-informer.service \
+    # remove auto upgrade service
+    && rm -f /usr/lib/systemd/system/default.target.wants/bootc-fetch-apply-updates.timer \
+    # save version into file
+    && echo ${IMAGE_VERSION} > /usr/lib/ai-release \
     && echo "blacklist nouveau" > /etc/modprobe.d/blacklist_nouveau.conf
 
 ARG SSHPUBKEY

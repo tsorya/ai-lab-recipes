@@ -157,7 +157,7 @@ RUN mv /etc/selinux /etc/selinux.tmp \
     # remove auto upgrade service
     && rm -f /usr/lib/systemd/system/default.target.wants/bootc-fetch-apply-updates.timer \
     # save version into file
-    && echo ${IMAGE_VERSION} > /usr/lib/ai-release \
+    && echo "RHEL_AI_VERSION='${IMAGE_VERSION}'" > /etc/os-release \
     && echo "blacklist nouveau" > /etc/modprobe.d/blacklist_nouveau.conf
 
 ARG SSHPUBKEY

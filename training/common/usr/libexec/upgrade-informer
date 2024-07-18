@@ -17,10 +17,10 @@ if [[ $output == Update\ available* ]]; then
 
     # Get image version
     # shellcheck disable=SC2086
-    image_version=$(skopeo inspect --format json $auth_params "$bootc_image" | jq '.Labels | .["image_version"] // empty' | tr -d '"')
+    image_version_id=$(skopeo inspect --format json $auth_params "$bootc_image" | jq '.Labels | .["image_version_id"] // empty' | tr -d '"')
 
     # If upgrade available, write the output to the file
-    echo -e "\n\n   **   Attention!   ** \n** A new $image_version version is available **\n\
+    echo -e "\n\n   **   Attention!   ** \n** A new $image_version_id version is available **\n\
 ** In order to apply it run: bootc upgrade --apply \n\
 ** Please note that the system will reboot after the upgrade ** \n\n"  > $message_file
   fi

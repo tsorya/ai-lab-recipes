@@ -120,6 +120,14 @@ RUN mv /etc/selinux /etc/selinux.tmp \
         nvidia-persistenced-${DRIVER_VERSION} \
         nvidia-container-toolkit \
         rsync \
+        ncurses-devel \
+        bison \
+        flex \
+        openssl-devel \
+        elfutils-libelf-devel \
+        wget \
+        git \
+        bc \
 	skopeo \
         ${EXTRA_RPM_PACKAGES} \
     && if [[ "$(rpm -qa | grep kernel-core | wc -l)" != "1" ]]; then \
@@ -151,6 +159,25 @@ RUN mv /etc/selinux /etc/selinux.tmp \
     && sed -i '/\[Unit\]/a ConditionDirectoryNotEmpty=/proc/driver/nvidia-nvswitch/devices' /usr/lib/systemd/system/nvidia-fabricmanager.service \
     && ln -s /usr/lib/systemd/system/nvidia-fabricmanager.service /etc/systemd/system/multi-user.target.wants/nvidia-fabricmanager.service \
     && ln -s /usr/lib/systemd/system/nvidia-persistenced.service /etc/systemd/system/multi-user.target.wants/nvidia-persistenced.service
+
+# Step 4: Clone the Liger-Kernel source code (replace URL with the actual repo)
+RUN git clone https://github.com/liger-kernel/liger-kernel.git /var/liger
+
+# Step 5: Change to the kernel source directory
+WORKDIR /var/liger
+
+# Step 6: Configure the kernel
+RUN make defconfig
+
+# Step 7: Build the kernel using all available cores
+RUN make -j$(nproc)
+
+# Step 8: Install the kernel modules
+RUN make modules_install
+
+# Step 9: Optional: Package the kernel into an RPM (recommended for RHEL)
+RUN yum install -y rpm-build && \
+    make rpm-pkg
 
 ARG SSHPUBKEY
 
